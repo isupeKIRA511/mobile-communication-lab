@@ -641,10 +641,25 @@ title('Sinc Function'); grid on;</pre>
     let currentChapterIndex = 0;
     let isPlaying = false;
     let playbackSpeed = 1.0;
-    const audioPlayer = document.getElementById("realAudioPlayer");
+    let audioPlayer = null;
+
+    function getAudio() {
+      if (!audioPlayer) {
+        audioPlayer = document.getElementById("realAudioPlayer");
+        if (!audioPlayer) {
+          audioPlayer = document.createElement("audio");
+          audioPlayer.id = "realAudioPlayer";
+          audioPlayer.preload = "auto";
+          audioPlayer.setAttribute("playsinline", "");
+          document.body.appendChild(audioPlayer);
+        }
+      }
+      return audioPlayer;
+    }
 
     // Initialize UI and Audio
     function initPlayer() {
+      audioPlayer = getAudio();
       setupAudioEvents();
       renderPlaylist();
       loadChapter(0, false);
@@ -752,13 +767,14 @@ title('Sinc Function'); grid on;</pre>
       renderPlaylist();
 
       // Load actual MP3 file
-      if (audioPlayer) {
+      const player = getAudio();
+      if (player) {
         const audioSrc = chapter.audio || `audio_ch${index + 1}.mp3`;
-        if (!audioPlayer.src.endsWith(audioSrc)) {
-          audioPlayer.src = audioSrc;
-          audioPlayer.load();
+        if (!player.src || !player.src.endsWith(audioSrc)) {
+          player.src = audioSrc;
+          player.load();
         }
-        audioPlayer.playbackRate = playbackSpeed;
+        player.playbackRate = playbackSpeed;
 
         const prog = document.getElementById("timelineProgress");
         if (prog) prog.style.width = "0%";
@@ -768,7 +784,10 @@ title('Sinc Function'); grid on;</pre>
         if (totalDur) totalDur.innerText = chapter.duration;
 
         if (autoPlay || isPlaying) {
-          audioPlayer.play().catch(e => {
+          player.play().then(() => {
+            isPlaying = true;
+            updatePlayerUI(true);
+          }).catch(e => {
             console.log("Tap to play on mobile:", e);
           });
         }
@@ -776,16 +795,17 @@ title('Sinc Function'); grid on;</pre>
     }
 
     function togglePlayPause() {
-      if (!audioPlayer) return;
-      if (audioPlayer.paused) {
-        audioPlayer.play().then(() => {
+      const player = getAudio();
+      if (!player) return;
+      if (player.paused) {
+        player.play().then(() => {
           isPlaying = true;
           updatePlayerUI(true);
         }).catch(err => {
           console.warn("Play error:", err);
         });
       } else {
-        audioPlayer.pause();
+        player.pause();
         isPlaying = false;
         updatePlayerUI(false);
       }
@@ -874,19 +894,21 @@ title('Sinc Function'); grid on;</pre>
     }
 
     function seekVideo(event) {
-      if (!audioPlayer || !audioPlayer.duration) return;
+      const player = getAudio();
+      if (!player || !player.duration) return;
       const rect = event.currentTarget.getBoundingClientRect();
       const clickX = event.clientX - rect.left;
       const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-      audioPlayer.currentTime = percentage * audioPlayer.duration;
+      player.currentTime = percentage * player.duration;
     }
 
     function cycleSpeed() {
       const speeds = [1.0, 1.25, 1.5, 2.0];
       const curIdx = speeds.indexOf(playbackSpeed);
       playbackSpeed = speeds[(curIdx + 1) % speeds.length];
-      if (audioPlayer) {
-        audioPlayer.playbackRate = playbackSpeed;
+      const player = getAudio();
+      if (player) {
+        player.playbackRate = playbackSpeed;
       }
       const speedBtn = document.getElementById("speedBtn");
       if (speedBtn) {
@@ -894,6 +916,7 @@ title('Sinc Function'); grid on;</pre>
       }
     }
 
+    /* -------------------------------------------------------------
        Interactive Exam Simulator Logic
        ------------------------------------------------------------- */
     const simPresets = {
@@ -975,18 +998,32 @@ title('Sinc Function'); grid on;</pre>
       runSimulation();
     }
 
+    function safeParseNum(str, fallback) {
+      if (str === undefined || str === null || str === "") return fallback;
+      const num = Number(str);
+      if (!isNaN(num)) return num;
+      const f = parseFloat(str);
+      return !isNaN(f) ? f : fallback;
+    }
+
+    function getVal(id, fallback = "") {
+      const el = document.getElementById(id);
+      return el ? el.value : fallback;
+    }
+
     function runSimulation() {
-      const expKey = document.getElementById('simExperimentSelect').value;
-      const codeView = document.getElementById('simGeneratedCode');
-      const canvas = document.getElementById('simCanvas');
-      const ctx = canvas.getContext('2d');
+      const expKey = getVal("simExperimentSelect", "exp3");
+      const codeView = document.getElementById("simGeneratedCode");
+      const canvas = document.getElementById("simCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
       const width = canvas.width;
       const height = canvas.height;
 
       ctx.clearRect(0, 0, width, height);
 
       // Background grid
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = "#1e293b";
       ctx.lineWidth = 1;
       for (let x = 0; x < width; x += 40) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
@@ -995,13 +1032,14 @@ title('Sinc Function'); grid on;</pre>
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
       }
 
-      if (expKey === 'exp1') {
-        const fs = parseFloat(document.getElementById('sim_fs').value) || 10000;
-        const fm = parseFloat(document.getElementById('sim_fm').value) || 50;
-        const Tend = parseFloat(document.getElementById('sim_Tend').value) || 0.2;
-        const type = document.getElementById('sim_type').value;
+      if (expKey === "exp1") {
+        const fs = safeParseNum(getVal("sim_fs"), 10000);
+        const fm = safeParseNum(getVal("sim_fm"), 50);
+        const Tend = safeParseNum(getVal("sim_Tend"), 0.2);
+        const type = getVal("sim_type", "sawtooth");
 
-        codeView.innerText = 
+        if (codeView) {
+          codeView.innerText = 
 `% Experiment 1 - Periodic Waveforms
 fs = ${fs}; % Sampling frequency
 fm = ${fm}; % Signal frequency
@@ -1012,18 +1050,18 @@ subplot(1, 1, 1)
 plot(t, x)
 xlabel('Time (sec)')
 ylabel('Amplitude')
-title('${type === 'sawtooth' ? 'Sawtooth Periodic Wave' : 'Square Periodic Wave'}')
+title('${type === "sawtooth" ? "Sawtooth Periodic Wave" : "Square Periodic Wave"}')
 grid on`;
+        }
 
-        // Draw waveform
-        ctx.strokeStyle = type === 'sawtooth' ? '#38bdf8' : '#34d399';
+        ctx.strokeStyle = type === "sawtooth" ? "#38bdf8" : "#34d399";
         ctx.lineWidth = 2;
         ctx.beginPath();
         const numPoints = 200;
         for (let i = 0; i < numPoints; i++) {
           const t = (i / numPoints) * Tend;
           let val = 0;
-          if (type === 'sawtooth') {
+          if (type === "sawtooth") {
             const period = 1 / fm;
             const phase = (t % period) / period;
             val = 2 * phase - 1;
@@ -1036,20 +1074,20 @@ grid on`;
         }
         ctx.stroke();
 
-        // Label on canvas
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '12px monospace';
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "12px monospace";
         ctx.fillText(`Waveform: ${type.toUpperCase()} | fm=${fm}Hz | fs=${fs}Hz`, 15, 20);
 
-      } else if (expKey === 'exp2') {
-        const fs = parseFloat(document.getElementById('sim_fs').value) || 10000;
-        const WStr = document.getElementById('sim_W').value;
-        const W = parseFloat(eval(WStr)) || 0.02;
-        const tStart = parseFloat(document.getElementById('sim_tStart').value) || -0.1;
-        const tEnd = parseFloat(document.getElementById('sim_tEnd').value) || 0.1;
-        const type = document.getElementById('sim_type').value;
+      } else if (expKey === "exp2") {
+        const fs = safeParseNum(getVal("sim_fs"), 10000);
+        const WStr = getVal("sim_W", "20e-3");
+        const W = safeParseNum(WStr, 0.02);
+        const tStart = safeParseNum(getVal("sim_tStart"), -0.1);
+        const tEnd = safeParseNum(getVal("sim_tEnd"), 0.1);
+        const type = getVal("sim_type", "tripuls");
 
-        codeView.innerText = 
+        if (codeView) {
+          codeView.innerText = 
 `% Experiment 2 - Aperiodic Waveforms
 fs = ${fs};
 t = ${tStart} : 1/fs : ${tEnd};
@@ -1059,11 +1097,11 @@ subplot(1, 1, 1)
 plot(t, x)
 xlabel('Time (sec)')
 ylabel('Amplitude')
-title('${type === 'tripuls' ? 'Triangular Aperiodic Pulse' : 'Rectangular Aperiodic Pulse'}')
+title('${type === "tripuls" ? "Triangular Aperiodic Pulse" : "Rectangular Aperiodic Pulse"}')
 grid on`;
+        }
 
-        // Draw waveform
-        ctx.strokeStyle = type === 'tripuls' ? '#c084fc' : '#60a5fa';
+        ctx.strokeStyle = type === "tripuls" ? "#c084fc" : "#60a5fa";
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         const numPoints = 250;
@@ -1071,7 +1109,7 @@ grid on`;
         for (let i = 0; i < numPoints; i++) {
           const t = tStart + (i / numPoints) * tRange;
           let val = 0;
-          if (type === 'tripuls') {
+          if (type === "tripuls") {
             if (Math.abs(t) <= W / 2) {
               val = 1 - (2 * Math.abs(t)) / W;
             }
@@ -1086,22 +1124,23 @@ grid on`;
         }
         ctx.stroke();
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '12px monospace';
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "12px monospace";
         ctx.fillText(`Aperiodic Pulse: ${type.toUpperCase()} | W=${WStr} s | Center=0`, 15, 20);
 
-      } else if (expKey === 'exp3') {
-        const fmStr = document.getElementById('sim_fm').value;
-        const fm = parseFloat(eval(fmStr)) || 50000;
-        const bw = parseFloat(document.getElementById('sim_bw').value) || 0.6;
-        const dB = parseFloat(document.getElementById('sim_dB').value) || -40;
-        const dtStr = document.getElementById('sim_dt').value;
-        const scaleStr = document.getElementById('sim_scale').value;
-        const scale = parseFloat(eval(scaleStr)) || 1000;
-        const t2start = parseFloat(document.getElementById('sim_t2start').value) || -5;
-        const t2end = parseFloat(document.getElementById('sim_t2end').value) || 5;
+      } else if (expKey === "exp3") {
+        const fmStr = getVal("sim_fm", "50e3");
+        const fm = safeParseNum(fmStr, 50000);
+        const bw = safeParseNum(getVal("sim_bw"), 0.6);
+        const dB = safeParseNum(getVal("sim_dB"), -40);
+        const dtStr = getVal("sim_dt", "1e-6");
+        const scaleStr = getVal("sim_scale", "1e3");
+        const scale = safeParseNum(scaleStr, 1000);
+        const t2start = safeParseNum(getVal("sim_t2start"), -5);
+        const t2end = safeParseNum(getVal("sim_t2end"), 5);
 
-        codeView.innerText = 
+        if (codeView) {
+          codeView.innerText = 
 `% Experiment 3 - Combined Script
 fm = ${fmStr}; bw = ${bw}; dB = ${dB}; dt = ${dtStr};
 
@@ -1114,7 +1153,7 @@ y2 = sinc(t2);
 
 subplot(2, 1, 1)
 plot(t1*${scaleStr}, y1)
-xlabel('Time (${scale === 1000 ? 'ms' : scale === 1e6 ? 'us' : 'sec'})')
+xlabel('Time (${scale === 1000 ? "ms" : scale === 1e6 ? "us" : "sec"})')
 ylabel('Amplitude')
 title('Gaussian Pulse')
 grid on
@@ -1125,18 +1164,15 @@ xlabel('Time (sec)')
 ylabel('Amplitude')
 title('Sinc Function')
 grid on`;
+        }
 
-        // Canvas split into 2 subplots
         const halfH = height / 2;
-
-        // Subplot 1: Gaussian Pulse (top)
-        ctx.strokeStyle = '#38bdf8';
+        ctx.strokeStyle = "#38bdf8";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         const numPts = 300;
         for (let i = 0; i < numPts; i++) {
-          const t = -0.04 + (i / numPts) * 0.08; // in ms
-          // envelope: exp(-t^2) * cos(2*pi*f*t)
+          const t = -0.04 + (i / numPts) * 0.08;
           const env = Math.exp(-Math.pow(t / 0.012, 2));
           const val = env * Math.cos(2 * Math.PI * 0.05 * t * 1000);
           const px = (i / numPts) * width;
@@ -1145,16 +1181,14 @@ grid on`;
         }
         ctx.stroke();
 
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = '11px sans-serif';
+        ctx.fillStyle = "#38bdf8";
+        ctx.font = "11px sans-serif";
         ctx.fillText("subplot(2,1,1): Gaussian Pulse", 15, 16);
 
-        // Divider
-        ctx.strokeStyle = '#334155';
+        ctx.strokeStyle = "#334155";
         ctx.beginPath(); ctx.moveTo(0, halfH); ctx.lineTo(width, halfH); ctx.stroke();
 
-        // Subplot 2: Sinc (bottom)
-        ctx.strokeStyle = '#f59e0b';
+        ctx.strokeStyle = "#f59e0b";
         ctx.lineWidth = 1.8;
         ctx.beginPath();
         for (let i = 0; i < numPts; i++) {
@@ -1169,8 +1203,8 @@ grid on`;
         }
         ctx.stroke();
 
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '11px sans-serif';
+        ctx.fillStyle = "#f59e0b";
+        ctx.font = "11px sans-serif";
         ctx.fillText("subplot(2,1,2): Sinc Function", 15, halfH + 16);
       }
     }
@@ -1182,11 +1216,25 @@ grid on`;
       });
     }
 
-    // Run on startup
-    window.addEventListener('DOMContentLoaded', () => {
-      initPlayer();
-      changeSimExperiment();
-    });
+    // Run on startup reliably
+    function startApp() {
+      try {
+        initPlayer();
+      } catch (e) {
+        console.error("initPlayer error:", e);
+      }
+      try {
+        changeSimExperiment();
+      } catch (e) {
+        console.error("changeSimExperiment error:", e);
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", startApp);
+    } else {
+      startApp();
+    }
   </script>
 </body>
 </html>
