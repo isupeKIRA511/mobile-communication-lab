@@ -97,9 +97,13 @@
 
           <!-- Live Subtitles Overlay Bar -->
           <div class="z-20 mt-4 bg-slate-900/90 backdrop-blur border border-slate-800/80 rounded-xl p-3 text-center text-sm md:text-base text-slate-200 shadow-lg">
-            <p id="subtitleText" class="font-medium leading-relaxed text-blue-200">
+            <p id="subtitleText" class="font-medium leading-relaxed text-blue-200 transition-colors">
               مرحباً بكم في الشرح المرئي لمختبر منظومات الاتصالات المتنقلة. اضغط "تشغيل" لبدء الشرح والتنقل بين الفصول.
             </p>
+            <!-- Mobile Voice Unmute Button -->
+            <button id="mobileVoiceBtn" onclick="enableAudioAndSpeak()" class="w-full mt-2.5 py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition animate-pulse">
+              <span>🔊 اضغط هنا للاستماع للشرح الصوتي (للآيفون والأندرويد)</span>
+            </button>
           </div>
         </div>
 
@@ -684,12 +688,78 @@ title('Sinc Function'); grid on;</pre>
       renderPlaylist();
 
       // Speak text if TTS is enabled
-      if (ttsEnabled) {
+      if (ttsEnabled && isPlaying) {
         speakText(chapter.subtitle);
       }
     }
 
+    // Audio / Speech Engine for Mobile & Desktop
+    let availableVoices = [];
+    let ttsEnabled = false;
+
+    function loadVoices() {
+      if ('speechSynthesis' in window) {
+        availableVoices = window.speechSynthesis.getVoices();
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function unlockMobileAudio() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.resume();
+      }
+    }
+
+    function enableAudioAndSpeak() {
+      unlockMobileAudio();
+      ttsEnabled = !ttsEnabled;
+      updateAudioUIState();
+      if (ttsEnabled) {
+        speakText(chapters[currentChapterIndex].subtitle);
+      } else {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+      }
+    }
+
+    function updateAudioUIState() {
+      const headerBtn = document.getElementById('audioToggleBtn');
+      const headerIcon = document.getElementById('audioIcon');
+      const headerText = document.getElementById('audioStatusText');
+      const mobileBtn = document.getElementById('mobileVoiceBtn');
+
+      if (ttsEnabled) {
+        if (headerBtn) {
+          headerBtn.classList.add('bg-emerald-600/20', 'border-emerald-500', 'text-emerald-300');
+          if (headerIcon) headerIcon.innerText = '🔊';
+          if (headerText) headerText.innerText = 'الصوت مفعّل';
+        }
+        if (mobileBtn) {
+          mobileBtn.classList.remove('from-emerald-600', 'to-teal-600', 'animate-pulse');
+          mobileBtn.classList.add('from-slate-800', 'to-slate-700', 'text-emerald-400', 'border', 'border-emerald-500/40');
+          mobileBtn.innerHTML = '<span>🔊 الشرح الصوتي مفعّل (اضغط لكتم الصوت)</span>';
+        }
+      } else {
+        if (headerBtn) {
+          headerBtn.classList.remove('bg-emerald-600/20', 'border-emerald-500', 'text-emerald-300');
+          if (headerIcon) headerIcon.innerText = '🔇';
+          if (headerText) headerText.innerText = 'تشغيل الصوت';
+        }
+        if (mobileBtn) {
+          mobileBtn.classList.add('from-emerald-600', 'to-teal-600', 'animate-pulse');
+          mobileBtn.classList.remove('from-slate-800', 'to-slate-700', 'text-emerald-400', 'border', 'border-emerald-500/40');
+          mobileBtn.innerHTML = '<span>🔊 اضغط هنا للاستماع للشرح الصوتي في الهاتف</span>';
+        }
+      }
+    }
+
     function togglePlayPause() {
+      unlockMobileAudio();
       isPlaying = !isPlaying;
       const playIcon = document.getElementById('playIcon');
       const pauseIcon = document.getElementById('pauseIcon');
@@ -698,9 +768,12 @@ title('Sinc Function'); grid on;</pre>
         playIcon.classList.add('hidden');
         pauseIcon.classList.remove('hidden');
         startTimer();
-        if (ttsEnabled) {
-          speakText(chapters[currentChapterIndex].subtitle);
+        // Auto-enable audio on user play tap if off
+        if (!ttsEnabled) {
+          ttsEnabled = true;
+          updateAudioUIState();
         }
+        speakText(chapters[currentChapterIndex].subtitle);
       } else {
         playIcon.classList.remove('hidden');
         pauseIcon.classList.add('hidden');
@@ -736,36 +809,54 @@ title('Sinc Function'); grid on;</pre>
     }
 
     function nextChapter() {
+      unlockMobileAudio();
       if (currentChapterIndex < chapters.length - 1) {
         loadChapter(currentChapterIndex + 1);
+        if (ttsEnabled) {
+          speakText(chapters[currentChapterIndex].subtitle);
+        }
       }
     }
 
     function prevChapter() {
+      unlockMobileAudio();
       if (currentChapterIndex > 0) {
         loadChapter(currentChapterIndex - 1);
+        if (ttsEnabled) {
+          speakText(chapters[currentChapterIndex].subtitle);
+        }
       }
     }
 
     function selectChapter(index) {
+      unlockMobileAudio();
       loadChapter(index);
+      if (ttsEnabled) {
+        speakText(chapters[index].subtitle);
+      }
     }
 
     function restartVideo() {
+      unlockMobileAudio();
       elapsedSeconds = 0;
       loadChapter(0);
       if (isPlaying) {
         startTimer();
+        if (ttsEnabled) speakText(chapters[0].subtitle);
       }
     }
 
     function seekVideo(event) {
+      unlockMobileAudio();
       const rect = event.currentTarget.getBoundingClientRect();
       const clickX = event.clientX - rect.left;
       const percentage = clickX / rect.width;
       elapsedSeconds = Math.floor(percentage * totalDurationSeconds);
       const targetChapter = Math.min(Math.floor(elapsedSeconds / 60), chapters.length - 1);
       loadChapter(targetChapter);
+      if (ttsEnabled && isPlaying) {
+        speakText(chapters[targetChapter].subtitle);
+      }
     }
 
     function cycleSpeed() {
@@ -790,40 +881,57 @@ title('Sinc Function'); grid on;</pre>
 
     // TTS Audio Narration Setup
     function setupAudioVoice() {
-      // Check if browser supports Web Speech API
       if (!('speechSynthesis' in window)) {
-        document.getElementById('audioToggleBtn').style.display = 'none';
+        const headerBtn = document.getElementById('audioToggleBtn');
+        if (headerBtn) headerBtn.style.display = 'none';
+        const mobileBtn = document.getElementById('mobileVoiceBtn');
+        if (mobileBtn) mobileBtn.style.display = 'none';
       }
     }
 
     function toggleAudio() {
-      ttsEnabled = !ttsEnabled;
-      const btn = document.getElementById('audioToggleBtn');
-      const icon = document.getElementById('audioIcon');
-      const text = document.getElementById('audioStatusText');
-
-      if (ttsEnabled) {
-        btn.classList.add('bg-blue-600/20', 'border-blue-500', 'text-blue-300');
-        icon.innerText = '🔊';
-        text.innerText = 'الصوت مفعل';
-        speakText(chapters[currentChapterIndex].subtitle);
-      } else {
-        btn.classList.remove('bg-blue-600/20', 'border-blue-500', 'text-blue-300');
-        icon.innerText = '🔇';
-        text.innerText = 'تشغيل الصوت (TTS)';
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-        }
-      }
+      enableAudioAndSpeak();
     }
 
     function speakText(text) {
       if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ar-SA';
-      utterance.rate = playbackSpeed;
-      window.speechSynthesis.speak(utterance);
+      
+      try {
+        window.speechSynthesis.resume();
+        window.speechSynthesis.cancel();
+
+        // Small timeout so mobile WebKit registers the cancellation and new utterance
+        setTimeout(() => {
+          const utterance = new SpeechSynthesisUtterance(text);
+          if (availableVoices.length === 0) {
+            availableVoices = window.speechSynthesis.getVoices();
+          }
+          
+          const arVoice = availableVoices.find(v => v.lang && (v.lang.startsWith('ar') || v.lang.includes('AR') || v.name.toLowerCase().includes('arabic') || v.name.includes('عربي')));
+          if (arVoice) {
+            utterance.voice = arVoice;
+          }
+          utterance.lang = 'ar-SA';
+          utterance.rate = playbackSpeed || 1.0;
+          utterance.pitch = 1.0;
+
+          utterance.onstart = () => {
+            const sub = document.getElementById('subtitleText');
+            if (sub) sub.classList.add('text-emerald-300');
+          };
+          utterance.onend = () => {
+            const sub = document.getElementById('subtitleText');
+            if (sub) sub.classList.remove('text-emerald-300');
+          };
+          utterance.onerror = (e) => {
+            console.warn("Speech synthesis notice:", e);
+          };
+
+          window.speechSynthesis.speak(utterance);
+        }, 80);
+      } catch (e) {
+        console.error("speakText error:", e);
+      }
     }
 
     /* -------------------------------------------------------------
