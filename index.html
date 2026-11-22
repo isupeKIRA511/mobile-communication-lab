@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فيديو تفاعلي: مختبر منظومات الاتصالات المتنقلة</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+    .active-chapter {
+      border-right: 4px solid #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 4px;
+    }
+    .canvas-container {
+      background: #0f172a;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+    .code-blank {
+      background: #1e293b;
+      border: 1px dashed #38bdf8;
+      color: #38bdf8;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased font-sans p-2 md:p-6 min-h-screen">
+
+  <!-- Header Banner -->
+  <header class="max-w-6xl mx-auto mb-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">فيديو تعليمي تفاعلي</span>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">المرحلة الرابعة</span>
+        </div>
+        <h1 class="text-xl md:text-2xl font-bold text-white mt-1">مختبر منظومات الاتصالات المتنقلة (Mobile Communication Lab)</h1>
+        <p class="text-xs md:text-sm text-slate-400">الشرح الشامل لفكرة الامتحان، تحويل الوحدات، والتجارب الثلاث (Periodic, Aperiodic, Gaussian & Sinc)</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="audioToggleBtn" onclick="toggleAudio()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition">
+        <span id="audioIcon">🔊</span>
+        <span id="audioStatusText">تشغيل الصوت (TTS)</span>
+      </button>
+      <a href="#simulator" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-500/20 transition flex items-center gap-1.5">
+        <span>محاكي الامتحان</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Video Player Stage -->
+  <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Video Player Screen & Controls (Col 8) -->
+    <div class="lg:col-span-8 flex flex-col gap-4">
+      
+      <!-- Video Screen Frame -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+        
+        <!-- Screen Top Bar -->
+        <div class="bg-slate-950/80 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+            <span class="font-medium text-slate-300" id="currentChapterBadge">المشهد 1 من 6: فكرة الامتحان وهيكلية الورقة</span>
+          </div>
+          <div class="flex items-center gap-2 font-mono">
+            <span id="timeElapsed">00:00</span> / <span id="totalDuration">06:00</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Screen Canvas / Slide Content -->
+        <div id="videoScreen" class="relative min-h-[380px] md:min-h-[440px] bg-slate-950 p-6 flex flex-col justify-between overflow-hidden">
+          
+          <!-- Inner Dynamic Slide Container -->
+          <div id="slideContent" class="z-10 flex-1 flex flex-col">
+            <!-- Injected by JavaScript -->
+          </div>
+
+          <!-- Live Subtitles Overlay Bar -->
+          <div class="z-20 mt-4 bg-slate-900/90 backdrop-blur border border-slate-800/80 rounded-xl p-3 text-center text-sm md:text-base text-slate-200 shadow-lg">
+            <p id="subtitleText" class="font-medium leading-relaxed text-blue-200">
+              مرحباً بكم في الشرح المرئي لمختبر منظومات الاتصالات المتنقلة. اضغط "تشغيل" لبدء الشرح والتنقل بين الفصول.
+            </p>
+          </div>
+        </div>
+
+        <!-- Player Control Bar -->
+        <div class="bg-slate-900 px-4 py-3 border-t border-slate-800 flex flex-col gap-3">
+          
+          <!-- Timeline Progress Scrubber -->
+          <div class="relative w-full h-2 bg-slate-800 rounded-full cursor-pointer overflow-hidden group" onclick="seekVideo(event)">
+            <div id="timelineProgress" class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-300" style="width: 16.6%;"></div>
+          </div>
+
+          <!-- Buttons Row -->
+          <div class="flex items-center justify-between text-slate-300">
+            <div class="flex items-center gap-2">
+              <button onclick="prevChapter()" class="p-2 rounded-lg hover:bg-slate-800 text-slate-300 transition" title="الفصل السابق">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/></svg>
+              </button>
+              
+              <button id="playPauseBtn" onclick="togglePlayPause()" class="w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 transition" title="تشغيل / إيقاف">
+                <svg id="playIcon" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="pauseIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              </button>
+
+              <button onclick="nextChapter()" class="p-2 rounded-lg hover:bg-slate-800 text-slate-300 transition" title="الفصل التالي">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"/></svg>
+              </button>
+
+              <span class="text-xs text-slate-400 font-mono ml-2" id="chapterTimer">دقيقة 1:00</span>
+            </div>
+
+            <!-- Right Controls: Speed & Visualizer Toggle -->
+            <div class="flex items-center gap-2">
+              <button onclick="cycleSpeed()" id="speedBtn" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300">
+                1.0x
+              </button>
+              <button onclick="restartVideo()" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition" title="إعادة من البداية">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Concept Summary Box -->
+      <div id="conceptSummaryCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+        <!-- Dynamically updated based on active chapter -->
+      </div>
+
+    </div>
+
+    <!-- Video Chapters & Playlist Navigation (Col 4) -->
+    <div class="lg:col-span-4 flex flex-col gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-full">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+          <h2 class="font-bold text-white text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            فهرس محاور الفيديو (Playlist)
+          </h2>
+          <span class="text-xs bg-slate-800 px-2 py-0.5 rounded text-slate-400">6 أجزاء</span>
+        </div>
+
+        <!-- Playlist items -->
+        <div class="flex flex-col gap-2 custom-scrollbar overflow-y-auto max-h-[520px] pr-1" id="playlistContainer">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Golden Exam Rule Banner -->
+        <div class="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+          <div class="font-bold mb-1 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            سر الدرجة الكاملة في الامتحان:
+          </div>
+          <p class="text-amber-200/80 leading-relaxed">
+            الورقة أولاً ثم برنامج MATLAB! تأكد من كتابة خطوة الزمن <code class="bg-amber-950 px-1 rounded">1/fs</code> وضرب محور الزمن بنبضة غاوس <code class="bg-amber-950 px-1 rounded">plot(t1*1e3, y1)</code> عند طلب العرض بالـ ms.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Interactive Exam Simulator Section -->
+  <section id="simulator" class="max-w-6xl mx-auto mt-10">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">تطبيق عملي</span>
+            <span class="text-xs text-slate-400">محاكي ورقة الامتحان الرسمية</span>
+          </div>
+          <h2 class="text-xl md:text-2xl font-bold text-white">محاكي الامتحان العملي: اختر التجربة وعوض القيم بنفسك</h2>
+          <p class="text-sm text-slate-400 mt-1">جرب إدخال الأرقام التي يحددها الأستاذ وشاهد كيف يتولد كود MATLAB والرسم البياني فورياً!</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <select id="simExperimentSelect" onchange="changeSimExperiment()" class="bg-slate-800 text-slate-200 text-sm rounded-xl px-4 py-2.5 border border-slate-700 focus:outline-none focus:border-blue-500">
+            <option value="exp1">التجربة 1: Periodic (Sawtooth & Square)</option>
+            <option value="exp2">التجربة 2: Aperiodic (Triangular & Rectangular)</option>
+            <option value="exp3" selected>التجربة 3: Gaussian Pulse & Sinc Function</option>
+          </select>
+          <button onclick="randomizeSimValues()" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs border border-slate-700 flex items-center gap-1.5 transition">
+            🎲 أرقام عشوائية
+          </button>
+        </div>
+      </div>
+
+      <!-- Simulator Body -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+        
+        <!-- Parameter Input Form (Teacher Assigned Values) -->
+        <div class="lg:col-span-5 bg-slate-950 p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              جدول المعطيات المحددة من التدريسي (Assigned Values):
+            </h3>
+            
+            <div id="simParamsForm" class="space-y-3 text-xs md:text-sm">
+              <!-- Dynamically populated based on experiment -->
+            </div>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+            <button onclick="runSimulation()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>تنفيذ الكود ورسم الإشارة (Run)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Code & Output Canvas (Col 7) -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+          <!-- MATLAB Code View -->
+          <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4 font-mono text-xs text-slate-300 relative">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] text-slate-400">
+              <span class="flex items-center gap-1.5 text-blue-400">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                كود MATLAB المكتمل للورقة والبرنامج
+              </span>
+              <button onclick="copyGeneratedCode()" class="hover:text-white transition">نسخ الكود 📋</button>
+            </div>
+            <pre id="simGeneratedCode" class="overflow-x-auto text-emerald-400 max-h-48 custom-scrollbar">
+              % جاري تجهيز الكود...
+            </pre>
+          </div>
+
+          <!-- Simulation Live Graph Canvas -->
+          <div class="canvas-container rounded-2xl border border-slate-800 p-4 flex flex-col">
+            <div class="flex items-center justify-between mb-2 text-xs text-slate-400">
+              <span class="font-medium text-slate-200">الرسم الناتج في نافذة MATLAB Figure</span>
+              <span id="canvasStatusText" class="text-blue-400 font-mono">Figure 1 (Active)</span>
+            </div>
+            <div class="relative w-full h-[220px] bg-slate-900/80 rounded-xl overflow-hidden border border-slate-800">
+              <canvas id="simCanvas" width="600" height="220" class="w-full h-full"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Script for Video Player, Narration, Chapters, and Simulation -->
+  <script>
+    // Chapter definitions
+    const chapters = [
+      {
+        id: 1,
+        title: "1. فكرة الامتحان وهيكلية الأسئلة",
+        badge: "المشهد 1: فلسفة الامتحان وطريقة الحل",
+        duration: "01:00",
+        summaryTitle: "هيكلية ورقة الامتحان وقواعد النجاح",
+        summaryPoints: [
+          "الورقة تحتوي على نموذج رسمي موحد لكل طالب مع ترك فراغات القيم العددية ليحددها الأستاذ.",
+          "القاعدة الذهبية الأولى: املأ ورقة الإجابة بالقلم أولاً، ثم افتح MATLAB ونفذ الكود.",
+          "لا تغير اسم أي دالة مطلوبة (مثل sawtooth, square, tripuls, rectpuls, gauspuls, sinc).",
+          "درجات إضافية إلزامية على: subplot, xlabel, ylabel, title, grid on."
+        ],
+        subtitle: "أهلاً بك! في هذا المشهد نتعرف على الفكرة الأساسية للامتحان العملي: الأستاذ يوزع ورقة فيها كود بناقص فراغات وجدول قيم مخصص لك شخصياً. السر أن تكتب في الورقة أولاً ثم تنفذ في الحاسوب.",
+        render: () => `
+          <div class="flex-1 flex flex-col justify-center items-center text-center p-4">
+            <div class="w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-500/40 text-blue-400 flex items-center justify-center mb-4">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="text-xl md:text-2xl font-bold text-white mb-2">كيف تأتي ورقة الامتحان؟</h3>
+            <p class="text-sm text-slate-300 max-w-xl mb-6">ورقة الأسئلة مقسمة إلى قسمين: <b>جدول المعطيات</b> يملؤه الأستاذ بقيم خاصة بك (مثل التردد أو عرض النبضة)، و<b>هيكل الكود البرمجي</b> وفيه فراغات تقوم بملئها بحسب معطياتك.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full max-w-2xl text-right">
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl">
+                <span class="text-blue-400 font-bold block mb-1">1. جدول القيم</span>
+                <span class="text-xs text-slate-400">يكتب فيه التدريسي: fs, fm, T, W أو fm, bw, dB.</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl">
+                <span class="text-cyan-400 font-bold block mb-1">2. الفراغات بالكود</span>
+                <span class="text-xs text-slate-400">تعوض القيم بعد تحويلها للصيغة العلمية في MATLAB.</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl">
+                <span class="text-emerald-400 font-bold block mb-1">3. تنفيذ البرنامج</span>
+                <span class="text-xs text-slate-400">التأكد من تطابق الشكل البياني ومحاوره مع المطلوب.</span>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        title: "2. دليل تحويل الوحدات وفخ المقياس",
+        badge: "المشهد 2: الوحدات، الأسس وفخ axis scale",
+        duration: "01:00",
+        summaryTitle: "دليل التحويلات العلمية والفخ الذي يسقط فيه أغلب الطلاب",
+        summaryPoints: [
+          "ترددات الـ Hz: كيلو (1e3)، ميغا (1e6)، غيغا (1e9)، تيرا (1e12).",
+          "أزمنة الثواني: ملي (1e-3)، مايكرو (1e-6)، نانو (1e-9)، بيكو (1e-12).",
+          "فخ مقياس الرسم (أخطر نقطة): إذا كان متجه الزمن t1 بالثواني وطلب التدريسي عرضه بالملي ثانية (ms)، نكتب plot(t1*1e3, y1) بالضرب في 1000 وليس بالقسمة!",
+          "خطوة أخذ العينات الزمنية هي دائماً 1/fs حتى تظهر الإشارة ناعمة ومكتملة."
+        ],
+        subtitle: "انتبه بشدة لهذا الفصل! 90% من أخطاء الطلاب تكون في كتابة الأسس، والأخطر هو ضرب المحور بـ 1e3 بدلاً من 1e-3 عند تحويل العرض إلى ميلي ثانية.",
+        render: () => `
+          <div class="flex-1 flex flex-col justify-center p-3 text-right">
+            <h3 class="text-lg md:text-xl font-bold text-white mb-3 text-center">جدول التحويلات ومقارنة الصيغ داخل MATLAB</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Frequencies Table -->
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+                <div class="text-xs font-bold text-cyan-400 mb-2 border-b border-slate-800 pb-1 flex justify-between">
+                  <span>ترددات الإشارة وأخذ العينات (Hz)</span>
+                  <span>صيغة MATLAB</span>
+                </div>
+                <div class="space-y-1.5 text-xs text-slate-300">
+                  <div class="flex justify-between py-0.5"><span>50 kHz (كيلو هرتز)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">50e3 أو 50000</code></div>
+                  <div class="flex justify-between py-0.5"><span>2 MHz (ميغا هرتز)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">2e6</code></div>
+                  <div class="flex justify-between py-0.5"><span>1.5 GHz (غيغا هرتز)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">1.5e9</code></div>
+                  <div class="flex justify-between py-0.5"><span>0.8 THz (تيرا هرتز)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">0.8e12</code></div>
+                </div>
+              </div>
+
+              <!-- Time Units Table -->
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+                <div class="text-xs font-bold text-amber-400 mb-2 border-b border-slate-800 pb-1 flex justify-between">
+                  <span>وحدات الزمن وعرض النبضة (sec)</span>
+                  <span>صيغة MATLAB</span>
+                </div>
+                <div class="space-y-1.5 text-xs text-slate-300">
+                  <div class="flex justify-between py-0.5"><span>20 ms (ملي ثانية)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">20e-3 أو 0.020</code></div>
+                  <div class="flex justify-between py-0.5"><span>1 µs (مايكرو ثانية)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">1e-6</code></div>
+                  <div class="flex justify-between py-0.5"><span>5 ns (نانو ثانية)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">5e-9</code></div>
+                  <div class="flex justify-between py-0.5"><span>1 ps (بيكو ثانية)</span><code class="text-emerald-400 bg-slate-950 px-1.5 rounded">1e-12</code></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Danger alert box -->
+            <div class="mt-3 p-2.5 rounded-xl bg-red-950/40 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+              <span class="text-lg">⚠️</span>
+              <div>
+                <b>فخ المقياس في Gaussian Pulse:</b> إذا طلب الرسم بالـ (ms)، نكتب في كود الرسم <code class="text-yellow-300 bg-black/40 px-1 rounded">plot(t1 * 1e3, y1)</code> و <code class="text-yellow-300 bg-black/40 px-1 rounded">xlabel('Time (ms)')</code> لأن 0.001 ثانية ضرب 1000 يعطي 1 ملي ثانية. إياك أن تكتب <code class="line-through text-red-400">1e-3</code> داخل الـ plot!
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        title: "3. التجربة 1 - الإشارات الدورية (Periodic)",
+        badge: "المشهد 3: موجة سن المنشار والموجة المربعة",
+        duration: "01:00",
+        summaryTitle: "Experiment 1: Periodic Waveforms (Sawtooth & Square)",
+        summaryPoints: [
+          "الدوال المستخدمة: sawtooth(2*pi*fm*t) و square(2*pi*fm*t).",
+          "تردد الإشارة fm يوضع داخل الزاوية الدائرية 2*pi*fm*t.",
+          "تردد أخذ العينات fs يحدد خطوة الزمن: t = 0 : 1/fs : T.",
+          "تأكد دائماً أن fs أكبر بكثير من fm (على الأقل 10000 هرتز عند fm = 50Hz) لتظهر الموجة حادة وسليمة."
+        ],
+        subtitle: "في التجربة الأولى نولد إما Sawtooth Wave أو Square Wave. لاحظ كيف يتم تعريف متجه الزمن t من 0 إلى زمن النهاية T بخطوة قدرها واحد على fs.",
+        render: () => `
+          <div class="flex-1 flex flex-col justify-between p-2">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold text-blue-400">مخطط التجربة الأولى (Periodic Waveforms)</span>
+              <span class="text-[11px] bg-blue-950 text-blue-300 px-2 py-0.5 rounded border border-blue-800">fm = 50 Hz | fs = 10 kHz</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+              <!-- Sawtooth Demo -->
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-200">1. دالة سن المنشار (Sawtooth Wave)</span>
+                  <pre class="bg-slate-950 p-2 rounded text-[11px] text-cyan-400 font-mono mt-1">
+fs = 10000;
+fm = 50;
+t = 0 : 1/fs : 0.2;
+x = sawtooth(2*pi*fm*t);
+subplot(2,1,1);
+plot(t, x);
+xlabel('Time (sec)');
+ylabel('Amplitude');
+title('Sawtooth Periodic Wave');
+grid on;</pre>
+                </div>
+                <div class="h-16 bg-slate-950 rounded flex items-center justify-center border border-slate-800/80 mt-1">
+                  <svg class="w-full h-12 text-cyan-400 px-4" viewBox="0 0 300 60" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M 0 50 L 50 10 L 50 50 L 100 10 L 100 50 L 150 10 L 150 50 L 200 10 L 200 50 L 250 10 L 250 50 L 300 10"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Square Demo -->
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-200">2. الموجة المربعة (Square Wave)</span>
+                  <pre class="bg-slate-950 p-2 rounded text-[11px] text-emerald-400 font-mono mt-1">
+fs = 10000;
+fm = 50;
+t = 0 : 1/fs : 0.2;
+x = square(2*pi*fm*t);
+subplot(2,1,2);
+plot(t, x);
+xlabel('Time (sec)');
+ylabel('Amplitude');
+title('Square Periodic Wave');
+grid on;</pre>
+                </div>
+                <div class="h-16 bg-slate-950 rounded flex items-center justify-center border border-slate-800/80 mt-1">
+                  <svg class="w-full h-12 text-emerald-400 px-4" viewBox="0 0 300 60" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M 0 50 L 0 10 L 35 10 L 35 50 L 70 50 L 70 10 L 105 10 L 105 50 L 140 50 L 140 10 L 175 10 L 175 50 L 210 50 L 210 10 L 245 10 L 245 50 L 280 50"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 4,
+        title: "4. التجربة 2 - النبضات غير الدورية (Aperiodic)",
+        badge: "المشهد 4: نبضات مستطيلة ومثلثية أحادية",
+        duration: "01:00",
+        summaryTitle: "Experiment 2: Aperiodic Waveforms (Triangular & Rectangular)",
+        summaryPoints: [
+          "الدوال المستخدمة: tripuls(t, W) و rectpuls(t, W).",
+          "البارامتر W يمثل عرض النبضة الكلي (Pulse Width) بالثواني (مثال 20ms يكتب 20e-3).",
+          "شرط أساسي علمياً: النبضة متمركزة حول الصفر t = 0، لذا يجب أن يبدأ متجه الزمن برقم سالب وينتهي برقم موجب يحتوي النبضة (مثال: من -1 إلى 1، أو من -0.1 إلى 0.1).",
+          "في دالة tripuls ترتفع القمة إلى 1 عند الصفر وتنعدم عند -W/2 و +W/2."
+        ],
+        subtitle: "التجربة الثانية تركز على النبضات الفردية غير المتكررة. انتبه: النبضة متمركزة حول الصفر، لذلك يبدأ متجه الزمن بقيمة سالبة وينتهي بموجبة.",
+        render: () => `
+          <div class="flex-1 flex flex-col justify-between p-2">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold text-purple-400">مخطط التجربة الثانية (Aperiodic Waveforms)</span>
+              <span class="text-[11px] bg-purple-950 text-purple-300 px-2 py-0.5 rounded border border-purple-800">عرض النبضة W = 20 ms = 20e-3 s</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+              <!-- Triangular Demo -->
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-200">1. النبضة المثلثية: tripuls(t, W)</span>
+                  <pre class="bg-slate-950 p-2 rounded text-[11px] text-purple-300 font-mono mt-1">
+fs = 10000;
+t = -0.1 : 1/fs : 0.1;
+x = tripuls(t, 20e-3);
+subplot(2,1,1);
+plot(t, x);
+axis([-0.1 0.1 -0.2 1.2]);
+xlabel('Time (sec)');
+ylabel('Amplitude');
+title('Triangular Aperiodic Pulse');
+grid on;</pre>
+                </div>
+                <div class="h-16 bg-slate-950 rounded flex items-center justify-center border border-slate-800/80 mt-1">
+                  <svg class="w-full h-12 text-purple-400 px-4" viewBox="0 0 300 60" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M 0 50 L 120 50 L 150 10 L 180 50 L 300 50"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Rectangular Demo -->
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-200">2. النبضة المستطيلة: rectpuls(t, W)</span>
+                  <pre class="bg-slate-950 p-2 rounded text-[11px] text-blue-300 font-mono mt-1">
+fs = 10000;
+t = -0.1 : 1/fs : 0.1;
+x = rectpuls(t, 20e-3);
+subplot(2,1,2);
+plot(t, x);
+axis([-0.1 0.1 -0.2 1.2]);
+xlabel('Time (sec)');
+ylabel('Amplitude');
+title('Rectangular Aperiodic Pulse');
+grid on;</pre>
+                </div>
+                <div class="h-16 bg-slate-950 rounded flex items-center justify-center border border-slate-800/80 mt-1">
+                  <svg class="w-full h-12 text-blue-400 px-4" viewBox="0 0 300 60" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M 0 50 L 120 50 L 120 10 L 180 10 L 180 50 L 300 50"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 5,
+        title: "5. التجربة 3 - نبضة غاوس والسنك (الأكثر أهمية)",
+        badge: "المشهد 5: Gaussian Pulse & Sinc Function",
+        duration: "01:00",
+        summaryTitle: "Experiment 3: Gaussian Pulse & Sinc Function (تأتي مجتمعة دائماً)",
+        summaryPoints: [
+          "تنفذ الدالتان في برنامج واحد باستخدام subplot(2,1,1) و subplot(2,1,2).",
+          "حساب زمن القطع tc: نستخدم tc = gauspuls('cutoff', fm, bw, [], dB).",
+          "متجه الزمن t1: يبدأ من -tc إلى tc بخطوة dt المحددة (مثال: t1 = -tc : 1e-6 : tc).",
+          "توليد دالة السنك: t2 = linspace(-5, 5) أو linspace(-5, 5, 100) ثم y2 = sinc(t2).",
+          "الرسم النهائي: plot(t1*1e3, y1) مع xlabel('Time (ms)') للجزء الأول، و plot(t2, y2) للجزء الثاني."
+        ],
+        subtitle: "التجربة الثالثة هي أهم تجربة وأكثرها تكراراً في الفاينل! الأستاذ يطلب فيها دمج Gaussian Pulse في الأعلى و Sinc Function في الأسفل في رسمة واحدة.",
+        render: () => `
+          <div class="flex-1 flex flex-col justify-between p-2">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs font-bold text-amber-400">التجربة الثالثة: الكود الموحد الكامل للفاينل</span>
+              <span class="text-[11px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded border border-amber-800">fm = 50e3 | bw = 0.6 | dB = -40</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 flex-1">
+              <!-- Code side -->
+              <div class="md:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+                <pre class="bg-slate-950 p-2 rounded text-[11px] text-amber-200 font-mono leading-relaxed overflow-x-auto">
+fm = 50e3; bw = 0.6; dB = -40; dt = 1e-6;
+<span class="text-sky-400">% 1. حساب زمن القطع وتوليد نبضة غاوس</span>
+tc = gauspuls('cutoff', fm, bw, [], dB);
+t1 = -tc : dt : tc;
+y1 = gauspuls(t1, fm, bw);
+
+<span class="text-sky-400">% 2. توليد متجه ودالة السنك</span>
+t2 = linspace(-5, 5);
+y2 = sinc(t2);
+
+<span class="text-emerald-400">% 3. رسم الجزء الأول (مقياس ms)</span>
+subplot(2,1,1);
+plot(t1*1e3, y1);
+xlabel('Time (ms)'); ylabel('Amplitude');
+title('Gaussian Pulse'); grid on;
+
+<span class="text-emerald-400">% 4. رسم الجزء الثاني (دالة sinc)</span>
+subplot(2,1,2);
+plot(t2, y2);
+xlabel('Time (sec)'); ylabel('Amplitude');
+title('Sinc Function'); grid on;</pre>
+              </div>
+
+              <!-- Visual Representation -->
+              <div class="md:col-span-5 flex flex-col gap-2 justify-center">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 text-center">
+                  <span class="text-[10px] text-slate-400 block mb-1">Gaussian Pulse (Oscillating with Gaussian envelope)</span>
+                  <div class="h-14 bg-slate-950 rounded flex items-center justify-center p-1">
+                    <svg class="w-full h-10 text-cyan-400" viewBox="0 0 200 40" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M 0 20 Q 50 20 70 20 L 75 16 L 80 24 L 85 10 L 90 30 L 95 4 L 100 36 L 105 4 L 110 30 L 115 10 L 120 24 L 125 16 L 130 20 Q 150 20 200 20"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 text-center">
+                  <span class="text-[10px] text-slate-400 block mb-1">Sinc Function: sin(pi*t)/(pi*t)</span>
+                  <div class="h-14 bg-slate-950 rounded flex items-center justify-center p-1">
+                    <svg class="w-full h-10 text-amber-400" viewBox="0 0 200 40" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M 0 20 Q 30 20 40 22 Q 50 18 60 23 Q 80 15 100 3 Q 120 15 140 23 Q 150 18 160 22 Q 170 20 200 20"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 6,
+        title: "6. مراجعة شاملة وقائمة تدقيق الدرجة الكاملة",
+        badge: "المشهد 6: قائمة التدقيق قبل تسليم الورقة",
+        duration: "01:00",
+        summaryTitle: "قائمة التدقيق قبل تسليم ورقة الامتحان (Checklist)",
+        summaryPoints: [
+          "هل كتبت الوحدات Hz و sec بصيغة صحيحة داخل الكود؟",
+          "هل وضعت الفاصلة المنقوطة (;) في نهاية أسطر التعريف لمنع طباعة ملايين الأرقام في نافذة Command Window؟",
+          "هل استخدمت subplot بالترقيم الصحيح (2,1,1) و (2,1,2)؟",
+          "هل أضفت العناوين التوضيحية: title و xlabel و ylabel و grid on؟",
+          "عند انتهاء الرسم في MATLAB، قارنه بشاشة المختبر للتأكد من عدم وجود أخطاء برمجية."
+        ],
+        subtitle: "مبروك! أنت الآن مستعد تماماً للدرجة الكاملة. راجع قائمة التدقيق هذه قبل تسليم الورقة للأستاذ وقبل الضغط على Run في MATLAB.",
+        render: () => `
+          <div class="flex-1 flex flex-col justify-center items-center text-center p-3">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mb-3">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Checklist التدقيق قبل مغادرة مقعد الامتحان</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-right max-w-xl w-full text-xs">
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center gap-2 text-slate-300">
+                <span class="text-emerald-400 font-bold text-base">✓</span>
+                <span>فصلت بين fm و fs وكتبت خطوة الزمن 1/fs بشكل صحيح.</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center gap-2 text-slate-300">
+                <span class="text-emerald-400 font-bold text-base">✓</span>
+                <span>تأكدت أن زمن البدء والنهاية في النبضات Aperiodic يشمل t = 0.</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center gap-2 text-slate-300">
+                <span class="text-emerald-400 font-bold text-base">✓</span>
+                <span>ضربت t1 بـ 1e3 في plot(t1*1e3, y1) مع xlabel('Time (ms)').</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center gap-2 text-slate-300">
+                <span class="text-emerald-400 font-bold text-base">✓</span>
+                <span>كتبت أسماء المحاور والعناوين بدقة لكل رسمة بدون أخطاء إملائية.</span>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <a href="#simulator" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-500/20 inline-flex items-center gap-2 transition">
+                <span>انتقل الآن لتجربة المحاكي التفاعلي بالأسفل</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+              </a>
+            </div>
+          </div>
+        `
+      }
+    ];
+
+    let currentChapterIndex = 0;
+    let isPlaying = false;
+    let videoTimer = null;
+    let elapsedSeconds = 0;
+    const totalDurationSeconds = 360; // 6 minutes total (1 min per chapter)
+    let playbackSpeed = 1.0;
+    let ttsEnabled = false;
+
+    // Initialize UI
+    function initPlayer() {
+      renderPlaylist();
+      loadChapter(0);
+      setupAudioVoice();
+    }
+
+    function renderPlaylist() {
+      const container = document.getElementById('playlistContainer');
+      container.innerHTML = chapters.map((ch, index) => `
+        <div onclick="selectChapter(${index})" class="p-3 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-950/60 cursor-pointer transition flex items-center justify-between text-xs ${index === currentChapterIndex ? 'active-chapter border-blue-500/50' : ''}">
+          <div class="flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-lg ${index === currentChapterIndex ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'} flex items-center justify-center font-mono font-bold text-[11px]">
+              ${index + 1}
+            </span>
+            <span class="font-medium ${index === currentChapterIndex ? 'text-white' : 'text-slate-300'}">${ch.title}</span>
+          </div>
+          <span class="text-slate-500 font-mono text-[10px]">${ch.duration}</span>
+        </div>
+      `).join('');
+    }
+
+    function loadChapter(index) {
+      currentChapterIndex = index;
+      const chapter = chapters[index];
+      
+      // Update screen
+      document.getElementById('currentChapterBadge').innerText = chapter.badge;
+      document.getElementById('slideContent').innerHTML = chapter.render();
+      document.getElementById('subtitleText').innerText = chapter.subtitle;
+
+      // Update Summary Card
+      const summaryCard = document.getElementById('conceptSummaryCard');
+      summaryCard.innerHTML = `
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+          <h3 class="font-bold text-white text-sm md:text-base">${chapter.summaryTitle}</h3>
+        </div>
+        <ul class="space-y-2 text-xs md:text-sm text-slate-300 list-disc list-inside">
+          ${chapter.summaryPoints.map(pt => `<li>${pt}</li>`).join('')}
+        </ul>
+      `;
+
+      // Update timeline
+      elapsedSeconds = index * 60;
+      updateTimelineUI();
+      renderPlaylist();
+
+      // Speak text if TTS is enabled
+      if (ttsEnabled) {
+        speakText(chapter.subtitle);
+      }
+    }
+
+    function togglePlayPause() {
+      isPlaying = !isPlaying;
+      const playIcon = document.getElementById('playIcon');
+      const pauseIcon = document.getElementById('pauseIcon');
+
+      if (isPlaying) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        startTimer();
+        if (ttsEnabled) {
+          speakText(chapters[currentChapterIndex].subtitle);
+        }
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        stopTimer();
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+      }
+    }
+
+    function startTimer() {
+      clearInterval(videoTimer);
+      videoTimer = setInterval(() => {
+        elapsedSeconds += 1;
+        updateTimelineUI();
+
+        // Check if chapter ended (each chapter is 60 sec)
+        if (elapsedSeconds % 60 === 0 && elapsedSeconds > 0) {
+          if (currentChapterIndex < chapters.length - 1) {
+            nextChapter();
+          } else {
+            // End of video
+            togglePlayPause();
+            elapsedSeconds = totalDurationSeconds;
+            updateTimelineUI();
+          }
+        }
+      }, 1000 / playbackSpeed);
+    }
+
+    function stopTimer() {
+      clearInterval(videoTimer);
+    }
+
+    function nextChapter() {
+      if (currentChapterIndex < chapters.length - 1) {
+        loadChapter(currentChapterIndex + 1);
+      }
+    }
+
+    function prevChapter() {
+      if (currentChapterIndex > 0) {
+        loadChapter(currentChapterIndex - 1);
+      }
+    }
+
+    function selectChapter(index) {
+      loadChapter(index);
+    }
+
+    function restartVideo() {
+      elapsedSeconds = 0;
+      loadChapter(0);
+      if (isPlaying) {
+        startTimer();
+      }
+    }
+
+    function seekVideo(event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const percentage = clickX / rect.width;
+      elapsedSeconds = Math.floor(percentage * totalDurationSeconds);
+      const targetChapter = Math.min(Math.floor(elapsedSeconds / 60), chapters.length - 1);
+      loadChapter(targetChapter);
+    }
+
+    function cycleSpeed() {
+      const speeds = [1.0, 1.25, 1.5, 2.0];
+      const curIdx = speeds.indexOf(playbackSpeed);
+      playbackSpeed = speeds[(curIdx + 1) % speeds.length];
+      document.getElementById('speedBtn').innerText = playbackSpeed.toFixed(1) + 'x';
+      if (isPlaying) {
+        startTimer();
+      }
+    }
+
+    function updateTimelineUI() {
+      const progressPercent = (elapsedSeconds / totalDurationSeconds) * 100;
+      document.getElementById('timelineProgress').style.width = `${progressPercent}%`;
+
+      const m = Math.floor(elapsedSeconds / 60);
+      const s = elapsedSeconds % 60;
+      document.getElementById('timeElapsed').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      document.getElementById('chapterTimer').innerText = `دقيقة ${m + 1}:00`;
+    }
+
+    // TTS Audio Narration Setup
+    function setupAudioVoice() {
+      // Check if browser supports Web Speech API
+      if (!('speechSynthesis' in window)) {
+        document.getElementById('audioToggleBtn').style.display = 'none';
+      }
+    }
+
+    function toggleAudio() {
+      ttsEnabled = !ttsEnabled;
+      const btn = document.getElementById('audioToggleBtn');
+      const icon = document.getElementById('audioIcon');
+      const text = document.getElementById('audioStatusText');
+
+      if (ttsEnabled) {
+        btn.classList.add('bg-blue-600/20', 'border-blue-500', 'text-blue-300');
+        icon.innerText = '🔊';
+        text.innerText = 'الصوت مفعل';
+        speakText(chapters[currentChapterIndex].subtitle);
+      } else {
+        btn.classList.remove('bg-blue-600/20', 'border-blue-500', 'text-blue-300');
+        icon.innerText = '🔇';
+        text.innerText = 'تشغيل الصوت (TTS)';
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+      }
+    }
+
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ar-SA';
+      utterance.rate = playbackSpeed;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    /* -------------------------------------------------------------
+       Interactive Exam Simulator Logic
+       ------------------------------------------------------------- */
+    const simPresets = {
+      exp1: {
+        title: "التجربة 1: Periodic Waveforms",
+        fields: [
+          { id: 'fs', label: 'تردد أخذ العينات (fs)', default: 10000, unit: 'Hz' },
+          { id: 'fm', label: 'تردد الإشارة (fm)', default: 50, unit: 'Hz' },
+          { id: 'Tend', label: 'زمن النهاية (T end)', default: 0.2, unit: 'sec' },
+          { id: 'type', label: 'نوع الدالة المطلوبة', default: 'sawtooth', type: 'select', options: ['sawtooth', 'square'] }
+        ]
+      },
+      exp2: {
+        title: "التجربة 2: Aperiodic Waveforms",
+        fields: [
+          { id: 'fs', label: 'تردد أخذ العينات (fs)', default: 10000, unit: 'Samples/sec' },
+          { id: 'W', label: 'عرض النبضة (W)', default: '20e-3', unit: 'sec (أو 20 ms)' },
+          { id: 'tStart', label: 'زمن البدء (t start)', default: -0.1, unit: 'sec' },
+          { id: 'tEnd', label: 'زمن الانتهاء (t end)', default: 0.1, unit: 'sec' },
+          { id: 'type', label: 'نوع الدالة', default: 'tripuls', type: 'select', options: ['tripuls', 'rectpuls'] }
+        ]
+      },
+      exp3: {
+        title: "التجربة 3: Gaussian Pulse and Sinc Function",
+        fields: [
+          { id: 'fm', label: 'تردد مركز النبضة (fm)', default: '50e3', unit: 'Hz (50 kHz)' },
+          { id: 'bw', label: 'عرض الحزمة النسبي (bw)', default: 0.6, unit: 'Fractional' },
+          { id: 'dB', label: 'مستوى القطع (Cutoff dB)', default: -40, unit: 'dB' },
+          { id: 'dt', label: 'خطوة الزمن لـ t1 (dt)', default: '1e-6', unit: 'sec' },
+          { id: 'scale', label: 'مقياس عرض الزمن (Display scale)', default: '1e3', unit: '1e3 = ms' },
+          { id: 't2start', label: 'بداية نطاق sinc (t2 start)', default: -5, unit: 'sec' },
+          { id: 't2end', label: 'نهاية نطاق sinc (t2 end)', default: 5, unit: 'sec' }
+        ]
+      }
+    };
+
+    function changeSimExperiment() {
+      const expKey = document.getElementById('simExperimentSelect').value;
+      const config = simPresets[expKey];
+      const formContainer = document.getElementById('simParamsForm');
+
+      formContainer.innerHTML = config.fields.map(field => {
+        if (field.type === 'select') {
+          return `
+            <div class="flex items-center justify-between gap-2">
+              <label class="text-slate-300 font-medium">${field.label}:</label>
+              <select id="sim_${field.id}" onchange="runSimulation()" class="bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1 font-mono text-xs focus:border-blue-500">
+                ${field.options.map(opt => `<option value="${opt}" ${opt === field.default ? 'selected' : ''}>${opt}</option>`).join('')}
+              </select>
+            </div>
+          `;
+        }
+        return `
+          <div class="flex items-center justify-between gap-2">
+            <label class="text-slate-300 font-medium">${field.label}:</label>
+            <div class="flex items-center gap-1.5">
+              <input id="sim_${field.id}" type="text" value="${field.default}" oninput="runSimulation()" class="w-24 bg-slate-900 border border-slate-700 text-cyan-400 font-mono text-xs rounded-lg px-2 py-1 text-center focus:border-blue-500">
+              <span class="text-[11px] text-slate-500">${field.unit}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      runSimulation();
+    }
+
+    function randomizeSimValues() {
+      const expKey = document.getElementById('simExperimentSelect').value;
+      if (expKey === 'exp1') {
+        const fms = [25, 50, 100, 200];
+        document.getElementById('sim_fm').value = fms[Math.floor(Math.random() * fms.length)];
+      } else if (expKey === 'exp2') {
+        const widths = ['10e-3', '20e-3', '40e-3'];
+        document.getElementById('sim_W').value = widths[Math.floor(Math.random() * widths.length)];
+      } else if (expKey === 'exp3') {
+        const freqs = ['40e3', '50e3', '80e3', '100e3'];
+        document.getElementById('sim_fm').value = freqs[Math.floor(Math.random() * freqs.length)];
+      }
+      runSimulation();
+    }
+
+    function runSimulation() {
+      const expKey = document.getElementById('simExperimentSelect').value;
+      const codeView = document.getElementById('simGeneratedCode');
+      const canvas = document.getElementById('simCanvas');
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Background grid
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+      }
+      for (let y = 0; y < height; y += 30) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+      }
+
+      if (expKey === 'exp1') {
+        const fs = parseFloat(document.getElementById('sim_fs').value) || 10000;
+        const fm = parseFloat(document.getElementById('sim_fm').value) || 50;
+        const Tend = parseFloat(document.getElementById('sim_Tend').value) || 0.2;
+        const type = document.getElementById('sim_type').value;
+
+        codeView.innerText = 
+`% Experiment 1 - Periodic Waveforms
+fs = ${fs}; % Sampling frequency
+fm = ${fm}; % Signal frequency
+t = 0 : 1/fs : ${Tend}; % Time vector
+x = ${type}(2*pi*fm*t);
+
+subplot(1, 1, 1)
+plot(t, x)
+xlabel('Time (sec)')
+ylabel('Amplitude')
+title('${type === 'sawtooth' ? 'Sawtooth Periodic Wave' : 'Square Periodic Wave'}')
+grid on`;
+
+        // Draw waveform
+        ctx.strokeStyle = type === 'sawtooth' ? '#38bdf8' : '#34d399';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const numPoints = 200;
+        for (let i = 0; i < numPoints; i++) {
+          const t = (i / numPoints) * Tend;
+          let val = 0;
+          if (type === 'sawtooth') {
+            const period = 1 / fm;
+            const phase = (t % period) / period;
+            val = 2 * phase - 1;
+          } else {
+            val = Math.sin(2 * Math.PI * fm * t) >= 0 ? 1 : -1;
+          }
+          const px = (i / numPoints) * width;
+          const py = height / 2 - val * (height * 0.35);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Label on canvas
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px monospace';
+        ctx.fillText(`Waveform: ${type.toUpperCase()} | fm=${fm}Hz | fs=${fs}Hz`, 15, 20);
+
+      } else if (expKey === 'exp2') {
+        const fs = parseFloat(document.getElementById('sim_fs').value) || 10000;
+        const WStr = document.getElementById('sim_W').value;
+        const W = parseFloat(eval(WStr)) || 0.02;
+        const tStart = parseFloat(document.getElementById('sim_tStart').value) || -0.1;
+        const tEnd = parseFloat(document.getElementById('sim_tEnd').value) || 0.1;
+        const type = document.getElementById('sim_type').value;
+
+        codeView.innerText = 
+`% Experiment 2 - Aperiodic Waveforms
+fs = ${fs};
+t = ${tStart} : 1/fs : ${tEnd};
+x = ${type}(t, ${WStr});
+
+subplot(1, 1, 1)
+plot(t, x)
+xlabel('Time (sec)')
+ylabel('Amplitude')
+title('${type === 'tripuls' ? 'Triangular Aperiodic Pulse' : 'Rectangular Aperiodic Pulse'}')
+grid on`;
+
+        // Draw waveform
+        ctx.strokeStyle = type === 'tripuls' ? '#c084fc' : '#60a5fa';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const numPoints = 250;
+        const tRange = tEnd - tStart;
+        for (let i = 0; i < numPoints; i++) {
+          const t = tStart + (i / numPoints) * tRange;
+          let val = 0;
+          if (type === 'tripuls') {
+            if (Math.abs(t) <= W / 2) {
+              val = 1 - (2 * Math.abs(t)) / W;
+            }
+          } else {
+            if (Math.abs(t) <= W / 2) {
+              val = 1;
+            }
+          }
+          const px = (i / numPoints) * width;
+          const py = height * 0.8 - val * (height * 0.55);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px monospace';
+        ctx.fillText(`Aperiodic Pulse: ${type.toUpperCase()} | W=${WStr} s | Center=0`, 15, 20);
+
+      } else if (expKey === 'exp3') {
+        const fmStr = document.getElementById('sim_fm').value;
+        const fm = parseFloat(eval(fmStr)) || 50000;
+        const bw = parseFloat(document.getElementById('sim_bw').value) || 0.6;
+        const dB = parseFloat(document.getElementById('sim_dB').value) || -40;
+        const dtStr = document.getElementById('sim_dt').value;
+        const scaleStr = document.getElementById('sim_scale').value;
+        const scale = parseFloat(eval(scaleStr)) || 1000;
+        const t2start = parseFloat(document.getElementById('sim_t2start').value) || -5;
+        const t2end = parseFloat(document.getElementById('sim_t2end').value) || 5;
+
+        codeView.innerText = 
+`% Experiment 3 - Combined Script
+fm = ${fmStr}; bw = ${bw}; dB = ${dB}; dt = ${dtStr};
+
+tc = gauspuls('cutoff', fm, bw, [], dB);
+t1 = -tc : dt : tc;
+y1 = gauspuls(t1, fm, bw);
+
+t2 = linspace(${t2start}, ${t2end});
+y2 = sinc(t2);
+
+subplot(2, 1, 1)
+plot(t1*${scaleStr}, y1)
+xlabel('Time (${scale === 1000 ? 'ms' : scale === 1e6 ? 'us' : 'sec'})')
+ylabel('Amplitude')
+title('Gaussian Pulse')
+grid on
+
+subplot(2, 1, 2)
+plot(t2, y2)
+xlabel('Time (sec)')
+ylabel('Amplitude')
+title('Sinc Function')
+grid on`;
+
+        // Canvas split into 2 subplots
+        const halfH = height / 2;
+
+        // Subplot 1: Gaussian Pulse (top)
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        const numPts = 300;
+        for (let i = 0; i < numPts; i++) {
+          const t = -0.04 + (i / numPts) * 0.08; // in ms
+          // envelope: exp(-t^2) * cos(2*pi*f*t)
+          const env = Math.exp(-Math.pow(t / 0.012, 2));
+          const val = env * Math.cos(2 * Math.PI * 0.05 * t * 1000);
+          const px = (i / numPts) * width;
+          const py = (halfH / 2) - val * (halfH * 0.35);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '11px sans-serif';
+        ctx.fillText("subplot(2,1,1): Gaussian Pulse", 15, 16);
+
+        // Divider
+        ctx.strokeStyle = '#334155';
+        ctx.beginPath(); ctx.moveTo(0, halfH); ctx.lineTo(width, halfH); ctx.stroke();
+
+        // Subplot 2: Sinc (bottom)
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        for (let i = 0; i < numPts; i++) {
+          const t = t2start + (i / numPts) * (t2end - t2start);
+          let val = 1;
+          if (t !== 0) {
+            val = Math.sin(Math.PI * t) / (Math.PI * t);
+          }
+          const px = (i / numPts) * width;
+          const py = (halfH + halfH / 2) - val * (halfH * 0.38);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = '11px sans-serif';
+        ctx.fillText("subplot(2,1,2): Sinc Function", 15, halfH + 16);
+      }
+    }
+
+    function copyGeneratedCode() {
+      const code = document.getElementById('simGeneratedCode').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("تم نسخ كود MATLAB بنجاح إلى الحافظة!");
+      });
+    }
+
+    // Run on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      initPlayer();
+      changeSimExperiment();
+    });
+  </script>
+</body>
+</html>
